@@ -85,7 +85,7 @@ if intOk and Interface then
     getgenv().Abysall.Interface = Interface
     print("[Abysall Loader] Interface loaded.")
 else
-    warn("[Abysall Loader] FATAL: Failed to load Interface.luau.")
+    warn("[Abysall Loader] FATAL: Failed to load Interface.luau!\nACTUAL ERROR: " .. tostring(Interface))
     return 
 end
 
