@@ -77,20 +77,29 @@ if not getgenv().Abysall.UILibrary then
 end
 
 -- ==========================================
--- 🚨 THE MAGIC INTERFACE LOADER 🚨
+-- 🚨 THE ULTIMATE INTERFACE PATCHER 🚨
 -- ==========================================
-print("[Abysall Loader] Downloading Interface.luau...")
+print("[Abysall Loader] Downloading and Patching Interface.luau...")
 local httpOk, source = pcall(function()
     return game:HttpGet(BaseUrl .. "Interface.luau")
 end)
 
 if not httpOk or not source or source == "" then
-    warn("[Abysall Loader] FATAL: Could not download Interface.luau. HTTP Error: " .. tostring(source))
+    warn("[Abysall Loader] FATAL: Could not download Interface.luau.")
     return
 end
 
--- PATCH: Fix the dead Bocaj URL automatically
+-- 1. Redirect the broken Bocaj URLs to YOUR repo
 source = source:gsub("https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/", BaseUrl)
+
+-- 2. Prevent the tabs from executing immediately (removes the () at the end)
+source = source:gsub('ApplyInfoTab = loadstring%(game:HttpGet%(AbysallUrl %.%. "Components/InfoTab.luau"%)%)', 'ApplyInfoTab = loadstring(game:HttpGet(AbysallUrl .. "Components/InfoTab.luau"))')
+source = source:gsub('ApplySettingsTab = loadstring%(game:HttpGet%(AbysallUrl %.%. "Components/SettingsTab.luau"%)%)', 'ApplySettingsTab = loadstring(game:HttpGet(AbysallUrl .. "Components/SettingsTab.luau"))')
+
+-- 3. ADD THE MISSING `return Interface` to the end of the script!
+if not source:find("return Interface") then
+    source = source .. "\n\nreturn Interface\n"
+end
 
 print("[Abysall Loader] Compiling Interface.luau...")
 local compileOk, funcOrErr = pcall(function()
@@ -107,7 +116,7 @@ local execOk, Interface = pcall(funcOrErr)
 
 if execOk and Interface then
     getgenv().Abysall.Interface = Interface
-    print("[Abysall Loader] Interface loaded.")
+    print("[Abysall Loader] Interface loaded successfully!")
 else
     warn("[Abysall Loader] FATAL: Error occurred while running Interface.luau:\n" .. tostring(Interface))
     return 
@@ -128,6 +137,7 @@ if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.C
     getgenv().Abysall.Interface.Library.CreateWindow = function(self, ...)
         local Window = oldCreateWindow(self, ...)
         
+        -- Apply tabs now that Window exists
         if getgenv().Abysall.Interface.ApplyInfoTab then
             getgenv().Abysall.Interface.ApplyInfoTab(Window)
         end
@@ -137,8 +147,9 @@ if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.C
         
         return Window
     end
+    print("[Abysall Loader] Window hook applied.")
 else
-    warn("[Abysall Loader] Failed to hook window. UI Library missing.")
+    warn("[Abysall Loader] FATAL: Failed to hook window. UI Library missing.")
 end
 
 print("[Abysall Loader] Loading Game Loader...")
