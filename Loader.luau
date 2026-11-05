@@ -131,18 +131,34 @@ if anaOk then
     getgenv().Abysall.Analytics = Analytics
 end
 
+-- ==========================================
+-- 🚨 THE SAFE WINDOW HOOK 🚨
+-- ==========================================
 print("[Abysall Loader] Hooking Window creation...")
 if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.CreateWindow then
     local oldCreateWindow = getgenv().Abysall.Interface.Library.CreateWindow
     getgenv().Abysall.Interface.Library.CreateWindow = function(self, ...)
+        -- Create the window normally
         local Window = oldCreateWindow(self, ...)
         
-        -- Apply tabs now that Window exists
+        -- Safely apply the Info Tab (prevents identifyexecutor crashes)
         if getgenv().Abysall.Interface.ApplyInfoTab then
-            getgenv().Abysall.Interface.ApplyInfoTab(Window)
+            local infoOk, infoErr = pcall(function()
+                getgenv().Abysall.Interface.ApplyInfoTab(Window)
+            end)
+            if not infoOk then
+                warn("[Abysall Loader] InfoTab failed to load: " .. tostring(infoErr))
+            end
         end
+        
+        -- Safely apply the Settings Tab
         if getgenv().Abysall.Interface.ApplySettingsTab then
-            getgenv().Abysall.Interface.ApplySettingsTab(Window)
+            local setOk, setErr = pcall(function()
+                getgenv().Abysall.Interface.ApplySettingsTab(Window)
+            end)
+            if not setOk then
+                warn("[Abysall Loader] SettingsTab failed to load: " .. tostring(setErr))
+            end
         end
         
         return Window
@@ -151,6 +167,7 @@ if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.C
 else
     warn("[Abysall Loader] FATAL: Failed to hook window. UI Library missing.")
 end
+-- ==========================================
 
 print("[Abysall Loader] Loading Game Loader...")
 local CurrentGame = GameList[game.GameId]
@@ -163,5 +180,5 @@ end)
 if not loadOk then
     warn("[Abysall Loader] FATAL: Failed to load " .. targetLoader .. "\n" .. tostring(loadErr))
 else
-    print("[Abysall Loader] Done! Script loaded.")
+    print("[Abysall Loader] Done! Script loaded successfully.")
 end
