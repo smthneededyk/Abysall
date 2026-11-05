@@ -6,7 +6,7 @@ local GameList = {
     [2440500124] = "Doors"
 }
 
--- ✅ YOUR REPO
+-- YOUR REPO
 local BaseUrl = "https://raw.githubusercontent.com/smthneededyk/Abysall/refs/heads/main/"
 
 getgenv().Abysall = {
@@ -23,7 +23,7 @@ if envOk and Environment then
     getgenv().Abysall.Environment = Environment
     print("[Abysall Loader] Environment loaded.")
 else
-    warn("[Abysall Loader] FATAL: Failed to load Environment.luau from YOUR repo. Check if the file exists and is public.")
+    warn("[Abysall Loader] FATAL: Failed to load Environment.luau.")
     return
 end
 
@@ -76,18 +76,43 @@ if not getgenv().Abysall.UILibrary then
     getgenv().Abysall.UILibrary = "Obsidian" 
 end
 
-print("[Abysall Loader] Loading Interface...")
-local intOk, Interface = pcall(function()
-    return loadstring(game:HttpGet(BaseUrl .. "Interface.luau"))()
+-- ==========================================
+-- 🚨 THE MAGIC INTERFACE LOADER 🚨
+-- ==========================================
+print("[Abysall Loader] Downloading Interface.luau...")
+local httpOk, source = pcall(function()
+    return game:HttpGet(BaseUrl .. "Interface.luau")
 end)
 
-if intOk and Interface then
+if not httpOk or not source or source == "" then
+    warn("[Abysall Loader] FATAL: Could not download Interface.luau. HTTP Error: " .. tostring(source))
+    return
+end
+
+-- PATCH: Fix the dead Bocaj URL automatically
+source = source:gsub("https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/", BaseUrl)
+
+print("[Abysall Loader] Compiling Interface.luau...")
+local compileOk, funcOrErr = pcall(function()
+    return loadstring(source)
+end)
+
+if not compileOk or not funcOrErr then
+    warn("[Abysall Loader] FATAL: Syntax error in Interface.luau:\n" .. tostring(funcOrErr))
+    return
+end
+
+print("[Abysall Loader] Executing Interface.luau...")
+local execOk, Interface = pcall(funcOrErr)
+
+if execOk and Interface then
     getgenv().Abysall.Interface = Interface
     print("[Abysall Loader] Interface loaded.")
 else
-    warn("[Abysall Loader] FATAL: Failed to load Interface.luau!\nACTUAL ERROR: " .. tostring(Interface))
+    warn("[Abysall Loader] FATAL: Error occurred while running Interface.luau:\n" .. tostring(Interface))
     return 
 end
+-- ==========================================
 
 print("[Abysall Loader] Loading Analytics...")
 local anaOk, Analytics = pcall(function()
@@ -103,7 +128,6 @@ if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.C
     getgenv().Abysall.Interface.Library.CreateWindow = function(self, ...)
         local Window = oldCreateWindow(self, ...)
         
-        -- This executes the functions from Interface.luau and passes the Window
         if getgenv().Abysall.Interface.ApplyInfoTab then
             getgenv().Abysall.Interface.ApplyInfoTab(Window)
         end
@@ -126,7 +150,7 @@ local loadOk, loadErr = pcall(function()
 end)
 
 if not loadOk then
-    warn("[Abysall Loader] FATAL: Failed to load " .. targetLoader)
+    warn("[Abysall Loader] FATAL: Failed to load " .. targetLoader .. "\n" .. tostring(loadErr))
 else
     print("[Abysall Loader] Done! Script loaded.")
 end
