@@ -1,32 +1,29 @@
-print("[Abysall Debug] 1. Loader started")
-
-if getgenv().Abysall then
-    warn("[Abysall Debug] Script is already running!")
-    return 
-end
+-- Clear any old broken instances
+getgenv().Abysall = nil
+print("[Abysall Loader] Starting...")
 
 local GameList = {
     [2440500124] = "Doors"
 }
 
-local BaseUrl = "https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/"
+-- ✅ YOUR REPO
+local BaseUrl = "https://raw.githubusercontent.com/smthneededyk/Abysall/refs/heads/main/"
 
 getgenv().Abysall = {
     Legit = true,
-    UILibrary = "Obsidian"
+    UILibrary = "Obsidian" 
 }
 
-print("[Abysall Debug] 2. Loading Environment...")
-task.wait(0.1) -- Prevent HTTP Rate Limiting
+print("[Abysall Loader] Loading Environment...")
 local envOk, Environment = pcall(function()
     return loadstring(game:HttpGet(BaseUrl .. "Environment.luau"))()
 end)
 
 if envOk and Environment then
     getgenv().Abysall.Environment = Environment
-    print("[Abysall Debug] 2a. Environment loaded successfully.")
+    print("[Abysall Loader] Environment loaded.")
 else
-    warn("[Abysall Debug] FATAL: Environment.luau failed to load!\n", Environment)
+    warn("[Abysall Loader] FATAL: Failed to load Environment.luau from YOUR repo. Check if the file exists and is public.")
     return
 end
 
@@ -44,19 +41,18 @@ local Services = setmetatable({}, {
     end
 })
 
-print("[Abysall Debug] 3. Loading ESP...")
-task.wait(0.1)
+print("[Abysall Loader] Loading ESP...")
 local espOk, ESPLibrary = pcall(function()
     return loadstring(game:HttpGet(BaseUrl .. "ESP.luau"))()
 end)
 if espOk then
     getgenv().Abysall.ESPLibrary = ESPLibrary
-    print("[Abysall Debug] 3a. ESP loaded.")
+    print("[Abysall Loader] ESP loaded.")
 else
-    warn("[Abysall Debug] Failed to load ESP.luau:\n", ESPLibrary)
+    warn("[Abysall Loader] Failed to load ESP.luau.")
 end
 
-print("[Abysall Debug] 4. Checking UserData...")
+print("[Abysall Loader] Loading UserData...")
 if getgenv().Abysall.Environment.writefile and getgenv().Abysall.Environment.readfile then
     if not getgenv().Abysall.Environment.isfile("Abysall/UserData.json") then
         local Data = { TotalExecutions = 0, UILibrary = "Obsidian" }
@@ -74,46 +70,40 @@ if getgenv().Abysall.Environment.writefile and getgenv().Abysall.Environment.rea
     getgenv().Abysall.UILibrary = Decoded.UILibrary
 
     getgenv().Abysall.Environment.writefile("Abysall/UserData.json", Services.HttpService:JSONEncode(Decoded))
-else
-    print("[Abysall Debug] 4a. writefile/readfile not supported by executor. Using defaults.")
-    getgenv().Abysall.TotalExecutions = 1
 end
 
 if not getgenv().Abysall.UILibrary then 
     getgenv().Abysall.UILibrary = "Obsidian" 
 end
 
-print("[Abysall Debug] 5. Loading Interface...")
-task.wait(0.1)
+print("[Abysall Loader] Loading Interface...")
 local intOk, Interface = pcall(function()
     return loadstring(game:HttpGet(BaseUrl .. "Interface.luau"))()
 end)
 
 if intOk and Interface then
     getgenv().Abysall.Interface = Interface
-    print("[Abysall Debug] 5a. Interface loaded.")
+    print("[Abysall Loader] Interface loaded.")
 else
-    warn("[Abysall Debug] FATAL: Interface.luau failed to load!\n", Interface)
+    warn("[Abysall Loader] FATAL: Failed to load Interface.luau.")
     return 
 end
 
-print("[Abysall Debug] 6. Loading Analytics...")
-task.wait(0.1)
+print("[Abysall Loader] Loading Analytics...")
 local anaOk, Analytics = pcall(function()
     return loadstring(game:HttpGet(BaseUrl .. "Analytics.luau"))()
 end)
 if anaOk then
     getgenv().Abysall.Analytics = Analytics
-else
-    warn("[Abysall Debug] Failed to load Analytics.luau:\n", Analytics)
 end
 
-print("[Abysall Debug] 7. Applying CreateWindow hook...")
+print("[Abysall Loader] Hooking Window creation...")
 if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.CreateWindow then
     local oldCreateWindow = getgenv().Abysall.Interface.Library.CreateWindow
     getgenv().Abysall.Interface.Library.CreateWindow = function(self, ...)
         local Window = oldCreateWindow(self, ...)
         
+        -- This executes the functions from Interface.luau and passes the Window
         if getgenv().Abysall.Interface.ApplyInfoTab then
             getgenv().Abysall.Interface.ApplyInfoTab(Window)
         end
@@ -123,13 +113,11 @@ if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.C
         
         return Window
     end
-    print("[Abysall Debug] 7a. Hook applied successfully.")
 else
-    warn("[Abysall Debug] FATAL: Could not hook CreateWindow. Library is missing!")
+    warn("[Abysall Loader] Failed to hook window. UI Library missing.")
 end
 
-print("[Abysall Debug] 8. Loading Game Loader...")
-task.wait(0.1)
+print("[Abysall Loader] Loading Game Loader...")
 local CurrentGame = GameList[game.GameId]
 local targetLoader = CurrentGame and "DLoader.luau" or "ULoader.luau"
 
@@ -138,7 +126,7 @@ local loadOk, loadErr = pcall(function()
 end)
 
 if not loadOk then
-    warn("[Abysall Debug] FATAL: " .. targetLoader .. " failed to load!\n", loadErr)
+    warn("[Abysall Loader] FATAL: Failed to load " .. targetLoader)
 else
-    print("[Abysall Debug] 8a. " .. targetLoader .. " loaded successfully!")
+    print("[Abysall Loader] Done! Script loaded.")
 end
