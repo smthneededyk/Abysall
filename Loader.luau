@@ -9,10 +9,10 @@ local GameList = {
   [2440500124] = "Doors"
 }
 
-local BaseUrl = "https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/"
+local BaseUrl = "https://raw.githubusercontent.com/smthneededyk/Abysall/refs/heads/main/"
 getgenv().Abysall = {
-    Environment = loadstring(game:HttpGet(BaseUrl .. "Components/Environment.luau"))(),
-    ESPLibrary = loadstring(game:HttpGet(BaseUrl .. "Components/ESP.luau"))(),
+    Environment = loadstring(game:HttpGet(BaseUrl .. "Environment.luau"))(),
+    ESPLibrary = loadstring(game:HttpGet(BaseUrl .. "ESP.luau"))(),
 
     Legit = true, -- pog
 }
@@ -58,12 +58,12 @@ if Abysall.Environment.writefile and Abysall.Environment.readfile then
     Abysall.Environment.writefile("Abysall/UserData.json", Services.HttpService:JSONEncode(Decoded))
 end
 
-Abysall.Interface = loadstring(game:HttpGet(BaseUrl .. "Components/Interface.luau"))()
-Abysall.Analytics = loadstring(game:HttpGet(BaseUrl .. "Components/Analytics.luau"))()
+Abysall.Interface = loadstring(game:HttpGet(BaseUrl .. "Interface.luau"))()
+Abysall.Analytics = loadstring(game:HttpGet(BaseUrl .. "Analytics.luau"))()
 
 local CurrentGame = GameList[game.GameId]
 if CurrentGame then
-    loadstring(game:HttpGet(BaseUrl .. "Games/" .. CurrentGame .. "/Loader.luau"))()
+    loadstring(game:HttpGet(BaseUrl .. "DLoader.luau"))()
 else
-    loadstring(game:HttpGet(BaseUrl .. "Games/Universal/Loader.luau"))()
+    loadstring(game:HttpGet(BaseUrl .. "ULoader.luau"))()
 end
