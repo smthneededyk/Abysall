@@ -147,7 +147,7 @@ end)
 
 RunTest("request", function()
 	local Response = Global.request({
-		Url = "https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/Components/Environment.luau",
+		Url = "https://raw.githubusercontent.com/smthneededyk/Environment.luau",
 		Method = "GET",
 	})
 	assert(Response.StatusCode == 200, "Status code should be 200")
