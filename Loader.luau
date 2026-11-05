@@ -7,7 +7,8 @@ local GameList = {
     [2440500124] = "Doors"
 }
 
-local BaseUrl = "https://raw.githubusercontent.com/smthneededyk/Abysall/refs/heads/main/"
+-- Pointing to Bocaj's repo
+local BaseUrl = "https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/"
 
 -- 1. Initialize the global table FIRST so remote scripts can see it
 getgenv().Abysall = {
@@ -80,9 +81,7 @@ if getgenv().Abysall.Environment.writefile and getgenv().Abysall.Environment.rea
     getgenv().Abysall.Environment.writefile("Abysall/UserData.json", Services.HttpService:JSONEncode(Decoded))
 end
 
--- 🚨 THE CRITICAL FIX 🚨
--- We MUST ensure UILibrary exists before Interface.luau reads it.
--- Otherwise, Interface.luau line 1 will crash with "index nil with 'Library'".
+-- 🚨 THE CRITICAL FIX: Ensure UILibrary exists before Interface reads it 🚨
 if not getgenv().Abysall.UILibrary then 
     getgenv().Abysall.UILibrary = "Obsidian" 
 end
@@ -96,7 +95,7 @@ if intOk and Interface then
     getgenv().Abysall.Interface = Interface
 else
     warn("[Abysall Loader] Failed to load Interface.luau:\n", Interface)
-    return -- Stop execution, UI is broken
+    return 
 end
 
 -- 7. Safely load Analytics
@@ -109,7 +108,26 @@ else
     warn("[Abysall Loader] Failed to load Analytics.luau:\n", Analytics)
 end
 
--- 8. Load the specific Game / Universal script
+-- 8. THE MAGIC HOOK: Inject Info/Settings tabs when Window is created
+if getgenv().Abysall.Interface.Library and getgenv().Abysall.Interface.Library.CreateWindow then
+    local oldCreateWindow = getgenv().Abysall.Interface.Library.CreateWindow
+    getgenv().Abysall.Interface.Library.CreateWindow = function(self, ...)
+        -- Create the window normally
+        local Window = oldCreateWindow(self, ...)
+        
+        -- Now that the window exists, apply the tabs from his repo
+        if getgenv().Abysall.Interface.ApplyInfoTab then
+            getgenv().Abysall.Interface.ApplyInfoTab(Window)
+        end
+        if getgenv().Abysall.Interface.ApplySettingsTab then
+            getgenv().Abysall.Interface.ApplySettingsTab(Window)
+        end
+        
+        return Window
+    end
+end
+
+-- 9. Load the specific Game / Universal script
 local CurrentGame = GameList[game.GameId]
 local targetLoader = CurrentGame and "DLoader.luau" or "ULoader.luau"
 
